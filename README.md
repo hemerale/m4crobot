@@ -1,5 +1,5 @@
 # M4croBot
->  The M4croBot used to be a discord bot made for manadge the official discord server of [m4croxx](https://github.com/m4croxx), currently he's offline because the server is taking a break
+>  The M4croBot was a Discord bot developed to manage the official Discord server of [m4croxx](https://github.com/m4croxx). It is currently offline because the server has been shut down.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/danielcranney/readme-generator/main/public/icons/skills/nodejs-colored.svg" width="100" height="100">
