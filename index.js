@@ -1,6 +1,6 @@
 /*
-	Hemerale - 2022
-					  */
+	Hemerale - 2022		
+				*/
 
 const Discord = require("discord.js")   //dichiarazione della libreria specifica per la creazione dei Bot per Discord • npm i discord.js
 const ytch = require("yt-channel-info") //dichiarazione della libreria per prendere le informazioni da Youtube • npm i yt-channel-info
