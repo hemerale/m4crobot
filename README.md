@@ -24,7 +24,39 @@ Il bot include funzionalità di benvenuto, moderazione automatica e comandi dive
 
 Il progetto è stato sviluppato utilizzando le seguenti tecnologie:
 
-- **Node.js** – Runtime JavaScript per l’esecuzione del bot
-- **Discord.js** – Libreria principale per l’interazione con le API di Discord
-- **yt-channel-info** – Libreria per il recupero di informazioni dai canali YouTube
+- **Node.js** (>=18) – Runtime JavaScript per l’esecuzione del bot
+- **Discord.js v14** – Libreria principale per l’interazione con le API di Discord
+- **dotenv** – Caricamento della configurazione da file `.env`
 - **Discord Developer Portal** – Utilizzato per la creazione e configurazione del bot
+
+---
+
+## 🚀 Setup
+
+1. Installa le dipendenze:
+   ```bash
+   npm install
+   ```
+2. Copia `.env.example` in `.env` e compila i valori:
+   ```bash
+   cp .env.example .env
+   ```
+   - `DISCORD_TOKEN`: token del bot dal [Discord Developer Portal](https://discord.com/developers/applications)
+   - `WELCOME_CHANNEL_ID`: ID del canale per i messaggi di benvenuto
+   - `LEAVE_CHANNEL_ID`: ID del canale per gli annunci di uscita
+   - `WELCOME_ROLE_NAME`: nome del ruolo assegnato ai nuovi membri (default `User`)
+   - `EXEMPT_ROLE_IDS`: ID dei ruoli esenti dalla moderazione automatica, separati da virgola
+3. Avvia il bot:
+   ```bash
+   npm start
+   ```
+
+Contenuti come i suggerimenti video e la lista delle parole filtrate si trovano in [config.js](config.js).
+
+> ⚠️ Non committare mai il file `.env`: contiene il token del bot ed è già escluso tramite `.gitignore`.
+
+---
+
+## 📄 Licenza
+
+Distribuito sotto licenza [Apache 2.0](LICENSE).

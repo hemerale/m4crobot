@@ -1,82 +1,110 @@
 /*
-	Hemerale - 2022		
+	Hemerale - 2022
 				*/
 
-const Discord = require("discord.js")   //dichiarazione della libreria specifica per la creazione dei Bot per Discord • npm i discord.js
-const ytch = require("yt-channel-info") //dichiarazione della libreria per prendere le informazioni da Youtube • npm i yt-channel-info
-const client = new Discord.Client(
-    { intents: ["GUILDS", "GUILD_MEMBERS", "GUILD_MESSAGES", "GUILD_MESSAGE_REACTIONS"] }
-)
+require("dotenv").config();
+const { Client, GatewayIntentBits, EmbedBuilder } = require("discord.js");
+const { video, bannedWords, welcomeEmbed, welcomeDmEmbed } = require("./config");
 
-client.login("token");
+const {
+    DISCORD_TOKEN,
+    WELCOME_CHANNEL_ID,
+    LEAVE_CHANNEL_ID,
+    WELCOME_ROLE_NAME = "User",
+    EXEMPT_ROLE_IDS = "",
+} = process.env;
 
-// Array contenente tutti i titoli dei video di m4croxx 
-let video =["guarda si PARTE e già la vita MI ODIA! - m4crovanilla #1", "guarda IRON e GRANO sono stati TROVATI! | m4crovanilla - ep 2", "guarda road to vittoria warzone su warzone!", "guarda la ultracraft ep 1!", "guarda Giochiamo a Fall guys tarocco - bro falls", "guarda Ho fatto il COLPO al DIAMOND CASINO' - GTA V", "guarda BEDWARS A CASO su HYPIXELS", "guarda CHE BELLA PIZZA! - cooking simulator", "guarda GUIDA e SPARATORIE su GTA per arrivare a 1M! - 1 Milione di V", "guarda ma se ANDASSIMO NEL NETHER? | m4crovanilla ep3", "guarda COME MAI ci sono dei VECCHETTI COSI'? - Just Die Alredy", "guarda 3 GIOCHI che l'umanità NON DOVEVA CONCEPIRE"];
+if (!DISCORD_TOKEN) {
+    console.error("Errore: variabile d'ambiente DISCORD_TOKEN non impostata. Copia .env.example in .env e compilalo.");
+    process.exit(1);
+}
+
+const exemptRoleIds = EXEMPT_ROLE_IDS.split(",").map(id => id.trim()).filter(Boolean);
+
+const client = new Client({
+    intents: [
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMembers,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.GuildMessageReactions,
+        GatewayIntentBits.MessageContent,
+    ],
+});
 
 // Avviso per quando il bot diventa online
 client.on("ready", () => {
-    console.log("il bot è ora online")
-    client.user.setActivity("YGN", {type: 'WATCHING'});
+    console.log("il bot è ora online");
+    client.user.setActivity("YGN", { type: 3 }); // 3 = Watching
 });
 
 // Messaggio di benvenuto agli utenti appena entrati
-client.on("guildMemberAdd", (member) => {
-    const ruolo = member.guild.roles.cache.find(r => r.name === 'User')
-    member.roles.add(ruolo);
-        
-let embedbenvenuto = new Discord.MessageEmbed()
-    .setTitle("Benvenuto 🤚")
-    .setColor("#00FF00")
-    .setDescription(`HEY! è entrato da noi <@${member.id}>, penso abbia sbagliato server... ti prego <@${member.id}> non uscire siamo soli :(`)
-    .setImage("https://images-ext-2.discordapp.net/external/k1JCrsx1-syTOdPou3gZovS_sePviNcZBkv4AR4GcDc/https/cdn-longterm.mee6.xyz/plugins/welcome/images/740659333481758861/f5522a431af360aa56e92838847b5ad2bc8555948d4a5644408843420a55bb5b.png?width=1193&height=671")
+client.on("guildMemberAdd", async (member) => {
+    const ruolo = member.guild.roles.cache.find(r => r.name === WELCOME_ROLE_NAME);
+    if (ruolo) {
+        await member.roles.add(ruolo).catch(err => console.error("Impossibile assegnare il ruolo:", err));
+    } else {
+        console.warn(`Ruolo "${WELCOME_ROLE_NAME}" non trovato nel server.`);
+    }
 
-    client.channels.cache.get("745672023212163113").send({ embeds: [embedbenvenuto] })
+    const embedBenvenuto = new EmbedBuilder()
+        .setTitle(welcomeEmbed.title)
+        .setColor(welcomeEmbed.color)
+        .setDescription(welcomeEmbed.description(member.id))
+        .setImage(welcomeEmbed.image);
 
-let embedbenvenutodm = new Discord.MessageEmbed()
-    .setTitle("Perfavore")
-    .setColor("#7004FC")
-    .setDescription(`Resta nel server ti prego siamo soli forse se siamo in tanti karen mi riporta i figli a casa... vabbè comunque ora che sei nel server puoi avere aggiornamenti sui video youtube e twitch di m4croxx :)`)
-    .setImage("https://images-ext-2.discordapp.net/external/k1JCrsx1-syTOdPou3gZovS_sePviNcZBkv4AR4GcDc/https/cdn-longterm.mee6.xyz/plugins/welcome/images/740659333481758861/f5522a431af360aa56e92838847b5ad2bc8555948d4a5644408843420a55bb5b.png?width=1193&height=671")
-            
-    member.send({ embeds: [embedbenvenutodm] })
-    console.log(member);
+    const canale = WELCOME_CHANNEL_ID && client.channels.cache.get(WELCOME_CHANNEL_ID);
+    if (canale) {
+        canale.send({ embeds: [embedBenvenuto] }).catch(err => console.error("Impossibile inviare il messaggio di benvenuto:", err));
+    }
+
+    const embedBenvenutoDm = new EmbedBuilder()
+        .setTitle(welcomeDmEmbed.title)
+        .setColor(welcomeDmEmbed.color)
+        .setDescription(welcomeDmEmbed.description)
+        .setImage(welcomeDmEmbed.image);
+
+    member.send({ embeds: [embedBenvenutoDm] }).catch(() => {
+        // L'utente potrebbe avere i DM disabilitati, non è un errore critico
+    });
 });
 
 // Saluto agli utenti appena usciti
 client.on("guildMemberRemove", (member) => {
-
-    client.channels.cache.get("745671163212070912").send(`<@${member.id}> è uscito... -1 :( `);
-    console.log(member);
+    const canale = LEAVE_CHANNEL_ID && client.channels.cache.get(LEAVE_CHANNEL_ID);
+    if (canale) {
+        canale.send(`<@${member.id}> è uscito... -1 :( `).catch(err => console.error("Impossibile inviare il messaggio di uscita:", err));
+    }
 });
 
-// Commandi personalizzati
-client.on("message", (message) => {
-    if (message.content.toLowerCase() == "che cosa guardo?") {
+// Comandi personalizzati + sistema di moderazione
+client.on("messageCreate", (message) => {
+    if (message.author.bot) return;
+
+    const contenuto = message.content.toLowerCase();
+
+    if (contenuto === "che cosa guardo?") {
         message.channel.send(video[Math.floor(Math.random() * video.length)]);
-    }   else if (message.content == "banana") {
-        message.react(`🍌`)
+        return;
     }
-})
 
-// Sistema di moderazione
-client.on("messageCreate", message => {
-    if (message.channel.type == "DM") return
+    if (contenuto === "banana") {
+        message.react("🍌").catch(err => console.error("Impossibile reagire al messaggio:", err));
+        return;
+    }
 
-    if (message.member.roles.cache.has("idRuolo1") || message.member.roles.cache.has("idRuolo2")) return
+    // La moderazione si applica solo ai messaggi in un server, non nei DM
+    if (!message.guild || !message.member) return;
 
-    var parolacce = ["dlcorcl", "discord-gi", "nitrofree", "dio", "madonna", "gesù", "gesu", "sant", "porco", "froci", "nigg", "negr", "faggot", "coglion", "ritardat", "stronz"]
-    var trovata = false;
+    const esente = exemptRoleIds.some(id => message.member.roles.cache.has(id));
+    if (esente) return;
 
-    parolacce.forEach(parola => {
-        if (message.content.toLowerCase().includes(parola.toLowerCase())) {
-            trovata = true;
-        }
-    })
-
+    const trovata = bannedWords.some(parola => contenuto.includes(parola.toLowerCase()));
     if (trovata) {
-        message.delete();
+        message.delete().catch(err => console.error("Impossibile eliminare il messaggio:", err));
     }
 });
+
+client.login(DISCORD_TOKEN);
 
 /* Messaggio contenente un embed con le regole del server
         client.on("messageCreate", (message) => {
@@ -119,7 +147,7 @@ Questo include il divieto di sovrapporre la tua voce a quelle altrui eccessivame
 (12b. Situazioni simili sono altamente situazionali quindi c'è da aspettarsi diverse segnalazioni prima di assegnare punizioni effettive al utente.)
 (12c. Soundboard e modifiche vocali non sono bannabili se non altamente fastidiose, ad esempio non bisogna spammare le soundboard)
                 `)
-    
+
             message.channel.send({ embeds: [embed] })
         }
     })
